@@ -40,3 +40,19 @@ NOT tested (not possible from this workspace, which cannot reach Kaggle or downl
 4. Bootstrap CIs and McNemar treat images as independent although crops share photographs (see `docs/READING_RESULTS.md` section 1).
 5. McNemar compares plain accuracy, not balanced accuracy.
 6. Heatmap colour scale is clipped at 0.5; occlusion panels have per-panel colour scales.
+
+---
+
+# Day 1 hardening (branch `day1-hardening`)
+
+Additive except `src/explain.py`, which is rewritten (its old behaviour is listed as item 2 and 6 above).
+
+| File | Change |
+|---|---|
+| `src/evaluate_cluster.py` (new) | Photograph-level (cluster) bootstrap: CIs for each metric, in-domain-minus-cross-domain gaps, paired model differences in balanced accuracy, and across-seed mean/sd. Fixes item 4 (image-level bootstrap treats crops of one photograph as independent) and item 5 (model comparison on balanced accuracy instead of plain-accuracy McNemar). |
+| `src/explain.py` (rewritten) | Uses the logit margin instead of probability (probability saturates near 0/1 and made maps of missed cracks look like noise); one shared symmetric colour scale and a colour bar; `--select random` (seeded) by default instead of the first images in file order. Output file name now ends in the selection mode. |
+| `scripts/run_seeds.sh` (new) | Several seeds (each re-draws the photograph split), resumable (skips finished runs), then runs both evaluators. |
+| `tests/test_cluster_bootstrap.py` (new) | Count-based metrics match scikit-learn; cluster interval brackets the estimate and is wider than the image-level one on clustered data. |
+
+Tested on synthetic data only (CPU): `pytest` (4 passed) and a 2-seed, 2-model run through train, evaluate, evaluate_cluster and explain.
+Not tested: the real data and GPU runs. With only 8 to 15 test photographs per surface, even photograph-level percentile intervals can be too narrow; read the across-seed spread (`seed_agreement.csv`) alongside them.
